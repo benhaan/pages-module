@@ -42,6 +42,12 @@ $config['format_output'] = 'none';
 $config['cache_externals'] = FALSE;
 
 /**
+ * Separating JS from HEAD output var allows you to place js output wherever you like, Steve Souders (High Performance
+ * Web Sites) suggest at the bottom of the page because of script blocking.
+ */
+$config['separate_js_output'] = FALSE;
+
+/**
  * CSS url as you would normally use it in HTML
  */
 $config['css_url'] = '/css/';

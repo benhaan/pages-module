@@ -8,9 +8,10 @@
  */
 class Pages_Core {
 
-	protected $html;
-	protected $head;
-	
+	protected $html         = '';
+	protected $head         = '';
+	protected $js_output    = '';
+
 	// Title
 	protected $title        = array();
 	protected $title_rev    = FALSE;
@@ -227,7 +228,7 @@ class Pages_Core {
 	{
 		// Make the eol a local variable for less typing
 		$eol = $this->eol;
-		
+
 		if (Kohana::config('pages.cache_externals'))
 		{
 			$this->cache_css_key = '_pages_'.Kohana::config('pages.version').'_'.md5(implode('', array_keys($this->css_cache_list)));
@@ -236,8 +237,6 @@ class Pages_Core {
 			$this->cache_css_exists = $this->cacheExists('css', $this->cache_css_key);
 			$this->cache_js_exists  = $this->cacheExists('js', $this->cache_js_key);
 		}
-		
-		$head = '';
 
 		// Add regular css
 		foreach ($this->css as $css)
@@ -248,7 +247,7 @@ class Pages_Core {
 			}
 			elseif ($css['cache'] === FALSE)
 			{
-				$head .= '<link rel="stylesheet" href="'.$css['file'].'" type="text/css" />'.$eol;
+				$this->head .= '<link rel="stylesheet" href="'.$css['file'].'" type="text/css" />'.$eol;
 			}
 		}
 
@@ -261,18 +260,18 @@ class Pages_Core {
 				
 				$cache = $this->setCache('css', $this->cache_css_key, $this->cache_container_css);
 
-				$head .= '<link rel="stylesheet" href="'.$this->css_url.$cache['filename'].'" type="text/css" />'.$eol;
+				$this->head .= '<link rel="stylesheet" href="'.$this->css_url.$cache['filename'].'" type="text/css" />'.$eol;
 			}
 			else
 			{
 				$filename = str_replace(realpath(Kohana::config('pages.css_path')).'/', '', $this->cache_css['file']);
 		
-				$head .= '<link rel="stylesheet" href="'.$this->css_url.$filename.'" type="text/css" />'.$eol;
+				$this->head .= '<link rel="stylesheet" href="'.$this->css_url.$filename.'" type="text/css" />'.$eol;
 			}
 		}
 		elseif ($this->cache_css_exists === TRUE)
 		{
-			$head .= '<link rel="stylesheet" href="'.$this->css_url.$this->cache_css_key.'.css'.'" type="text/css" />'.$eol;
+			$this->head .= '<link rel="stylesheet" href="'.$this->css_url.$this->cache_css_key.'.css'.'" type="text/css" />'.$eol;
 		}
 
 		// Add regular js
@@ -284,7 +283,16 @@ class Pages_Core {
 			}
 			elseif ($js['cache'] === FALSE)
 			{
-				$head .= '<script type="text/javascript" src="'.$js['file'].'"></script>'.$eol;
+				$output = '<script type="text/javascript" src="'.$js['file'].'"></script>'.$eol;
+
+				if (Kohana::config('pages.separate_js_output') === TRUE)
+				{
+					$this->js_output .= $output;
+				}
+				else
+				{
+					$this->head .= $output;
+				}
 			}
 		}
 		
@@ -294,32 +302,66 @@ class Pages_Core {
 			if ($this->cache_js['data'] === '' || $this->cache_js['data'] === null)
 			{
 				$this->removeExpiredCache('js');
-				
+
 				$cache = $this->setCache('js', $this->cache_js_key, $this->cache_container_js);
-				
-				$head .= '<script type="text/javascript" src="'.$this->js_url.$cache['filename'].'"></script>'.$eol;
+
+				$output = '<script type="text/javascript" src="'.$this->js_url.$cache['filename'].'"></script>'.$eol;
+
+				if (Kohana::config('pages.separate_js_output') === TRUE)
+				{
+					$this->js_output .= $output;
+				}
+				else
+				{
+					$this->head .= $output;
+				}
 			}
 			else
 			{
 				$filename = str_replace(realpath(Kohana::config('pages.js_path')).'/', '', $this->cache_js['file']);
-		
-				$head .= '<script type="text/javascript" src="'.$this->js_url.$filename.'.js"></script>'.$eol;
+
+				$output = '<script type="text/javascript" src="'.$this->js_url.$filename.'.js"></script>'.$eol;
+
+				if (Kohana::config('pages.separate_js_output') === TRUE)
+				{
+					$this->js_output .= $output;
+				}
+				else
+				{
+					$this->head .= $output;
+				}
 			}
 		}
 		elseif ($this->cache_js_exists === TRUE)
 		{
-			$head .= '<script type="text/javascript" src="'.$this->js_url.$this->cache_js_key.'.js"></script>'.$eol;
+			$output = '<script type="text/javascript" src="'.$this->js_url.$this->cache_js_key.'.js"></script>'.$eol;
+
+			if (Kohana::config('pages.separate_js_output') === TRUE)
+			{
+				$this->js_output .= $output;
+			}
+			else
+			{
+				$this->head .= $output;
+			}
 		}
 
 		// Add raw js
 		if (count($this->raw_js) > 0)
 		{
-			$head .= '<script type="text/javascript">'.$eol.
-			         implode($eol, $this->raw_js).$eol.
-			         '</script>'.$eol;
-		}
+			$output .= '<script type="text/javascript">'.$eol.
+			           implode($eol, $this->raw_js).$eol.
+			           '</script>'.$eol;
 
-		return $head;
+			if (Kohana::config('pages.separate_js_output') === TRUE)
+			{
+				$this->js_output .= $output;
+			}
+			else
+			{
+				$this->head .= $output;
+			}
+		}
 	}
 	
 	private function buildHead()
@@ -328,13 +370,13 @@ class Pages_Core {
 		$eol = $this->eol;
 		
 		// Start with nothing
-		$head = '';
+		$this->head = '';
 		
 		// Meta tags
-		$head .= (count($this->meta)) ? implode($eol, $this->meta).$eol : '';
+		$this->head .= (count($this->meta)) ? implode($eol, $this->meta).$eol : '';
 
 		// Link tags
-		$head .= (count($this->link)) ? implode($eol, $this->link).$eol : '';
+		$this->head .= (count($this->link)) ? implode($eol, $this->link).$eol : '';
 		
 		// Reverse Title
 		if ($this->title_rev)
@@ -343,12 +385,10 @@ class Pages_Core {
 		}
 		
 		// Title
-		$head .= '<title>'.implode($this->title_sep, $this->title).'</title>'.$eol;
+		$this->head .= '<title>'.implode($this->title_sep, $this->title).'</title>'.$eol;
 		
 		// Build all of the CSS and JS
-		$head .= $this->buildCSSAndJS();
-				
-		return $head;
+		$this->buildCSSAndJS();
 	}
 	
 	public function display($content = FALSE, $config = array(), $type = FALSE) {
@@ -357,7 +397,7 @@ class Pages_Core {
 		$eol = $this->eol;
 		
 		// Construct the <head>
-		$this->head = $this->buildHead();
+		$this->buildHead();
 		
 		// Grab the inner view
 		if ($content)
@@ -365,31 +405,37 @@ class Pages_Core {
 			// Add the rest of the config if there isn't a template
 			if (!$this->template)
 			{
-				$temp = array(
-					'head'   => $this->head
+				$config = array_merge(
+					$config,
+					array(
+						'head'   => $this->head,
+						'js'     => $this->js_output
+					)
 				);
-				
-				$config = array_merge($config, $temp);
 			}
-			
+
 			$content = page::view($content, $config, $type);
 		}
 		
 		// Display the page with a template
-		if ($this->template) {
-		
-			// Setup the main template config array
-			$config = array(
-				'head' 		=> $this->head,
-				'content' 	=> $content.$eol
+		if ($this->template)
+		{
+			// Setup the main template config array and merge with config data passed in
+			$config = array_merge(
+				$config, 
+				array(
+					'head'    => $this->head,
+					'content' => $content.$eol,
+					'js'      => $this->js_output
+				)
 			);
-		
+
 			// Display the view
 			$view = new View($this->template, $config);
 			$output = $view->render();
-		
-		} else {
-			
+		}
+		else
+		{
 			$output = $content;
 		}
 		
