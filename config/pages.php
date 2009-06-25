@@ -42,30 +42,48 @@ $config['format_output'] = 'none';
 $config['cache_externals'] = FALSE;
 
 /**
+ * If cache_externals is enabled, do you want to prepend a number to front of externals domain
+ * to enable browsers to asynchronously download many resources at once.
+ */
+$config['subdomain_roundrobin'] = FALSE;
+
+/**
+ * If cache_externals is enabled and subdomain roundrobin for resources is enabled, what is the prefix
+ */
+$config['subdomain_roundrobin_prefix'] = '';
+
+/**
  * Separating JS from HEAD output var allows you to place js output wherever you like, Steve Souders (High Performance
  * Web Sites) suggest at the bottom of the page because of script blocking.
  */
 $config['separate_js_output'] = FALSE;
 
 /**
+ * Base externals URL and server path
+ */
+
+$config['ext_url'] = 'http://ext.example.com';
+$config['ext_path'] = '../../ext/html/';
+
+/**
  * CSS url as you would normally use it in HTML
  */
-$config['css_url'] = '/css/';
+$config['css_url'] = $config['ext_url'].'/css/';
 
 /**
  * File path to your css folder (relative to index.php) with a trailing slash.
  */
-$config['css_path'] = 'css/';
+$config['css_path'] = $config['ext_path'].'css/';
 
 /**
  * Javascript url as you would normally use it in HTML
  */
-$config['js_url'] = '/js/';
+$config['js_url'] = $config['ext_url'].'/js/';
 
 /**
  * File path to your js folder (relative to index.php) with a trailing slash.
  */
-$config['js_path'] = 'js/';
+$config['js_path'] = $config['ext_path'].'js/';
 
 /**
  * Version number to append to end of JS and CSS files to combat caching
