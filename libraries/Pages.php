@@ -349,7 +349,7 @@ class Pages_Core {
 		// Add raw js
 		if (count($this->raw_js) > 0)
 		{
-			$output .= '<script type="text/javascript">'.$eol.
+			$output = '<script type="text/javascript">'.$eol.
 			           implode($eol, $this->raw_js).$eol.
 			           '</script>'.$eol;
 
