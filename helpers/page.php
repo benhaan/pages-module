@@ -8,6 +8,9 @@
  */
 class page_Core {
 
+	private static $url_pre_counter = 0;
+	private static $url_pre = 1;
+
 	/**
 	 * Returns the value of a view ane merges the config with any data passed to it
 	 *
@@ -122,5 +125,17 @@ class page_Core {
 	function minifyJS($script)
 	{
 		return JSMin::minify($script);
+	}
+
+	public static function ext($url)
+	{
+		self::$url_pre_counter++;
+		if (self::$url_pre_counter % 2 === 0)
+		{
+			self::$url_pre_counter = 0;
+			self::$url_pre++;
+		}
+
+		return str_replace('ext', self::$url_pre.'.ext', Kohana::config($url));
 	}
 }

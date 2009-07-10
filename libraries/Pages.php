@@ -23,6 +23,7 @@ class Pages_Core {
 	protected $css          = array();
 	protected $js           = array();
 	protected $raw_js       = array();
+	public    $ext_url;
 	public    $css_url;
 	public    $js_url;
 	
@@ -77,11 +78,12 @@ class Pages_Core {
 	}
 
 	public function __construct()
-	{					
+	{
 		// Setup <head> variables from config file
 		$this->title[]         = Kohana::config('pages.title');
 		$this->title_sep       = Kohana::config('pages.title_seperator');
 		$this->title_rev       = Kohana::config('pages.title_reverse');
+		$this->ext_url         = Kohana::config('pages.ext_url');
 		$this->css_url         = Kohana::config('pages.css_url');
 		$this->js_url          = Kohana::config('pages.js_url');
 		$this->template        = Kohana::config('pages.template');
@@ -179,7 +181,7 @@ class Pages_Core {
 		}
 		elseif (strpos($this->$url, '://') >= 0)
 		{
-		    $scripts[$file]['file'] = $this->$url.$file.'.'.$type.$this->version;
+			$scripts[$file]['file'] = $this->$url.$file.'.'.$type.$this->version;
 		}
 		else
 		{
@@ -203,27 +205,27 @@ class Pages_Core {
 	{
 		$this->css = array();
 	}
-	
+
 	public function addJS($file, $cache = null)
 	{
 		$this->addScript('js', $file, $cache);
 	}
-	
+
 	public function removeJS($script)
 	{
 		unset($this->js[$script]);
 	}
-	
+
 	public function removeAllJS()
 	{
 		$this->js = array();
 	}
-	
+
 	public function addRawJS($javascript)
 	{	
 		$this->raw_js[] = $javascript;
 	}
-	
+
 	private function buildCSSAndJS()
 	{
 		// Make the eol a local variable for less typing
@@ -295,7 +297,7 @@ class Pages_Core {
 				}
 			}
 		}
-		
+
 		// Add Cached JS
 		if ($this->cache_container_js != '')
 		{
@@ -363,7 +365,7 @@ class Pages_Core {
 			}
 		}
 	}
-	
+
 	private function buildHead()
 	{
 		// Make the eol a local variable for less typing
@@ -390,7 +392,7 @@ class Pages_Core {
 		// Build all of the CSS and JS
 		$this->buildCSSAndJS();
 	}
-	
+
 	public function display($content = FALSE, $config = array(), $type = FALSE) {
 		
 		// Make the eol a local variable for less typing
@@ -445,7 +447,7 @@ class Pages_Core {
 		// Display the page
 		echo $output;
 	}
-	
+
 	private function fileCombine($type, $file)
 	{
 		$exists    = 'cache_'.$type.'_exists';
@@ -467,7 +469,7 @@ class Pages_Core {
 			if ($cur_cache['data'] === null)
 			{
 				$output = FALSE;
-			
+
 				// Open actual file to load it into our container
 				// Use cURL incase it's an external file
 		    	$ch = curl_init();
@@ -488,7 +490,7 @@ class Pages_Core {
 			}
 		}
 	}
-	
+
 	private function formatHTML($output, $format = FALSE)
 	{
 		$format = (($format) ? $format : $this->format_output);
@@ -506,12 +508,12 @@ class Pages_Core {
 		
 		return $output;
 	}
-	
+
 	private function cacheExists($type, $key)
 	{
 		return (bool) file_exists(Kohana::config('pages.'.$type.'_path').$key.'.'.$type);
 	}
-	
+
 	private function getCache($type, $key)
 	{
 		$data = FALSE;
@@ -528,7 +530,7 @@ class Pages_Core {
 		
 		return array('data' => null, 'file' => $key.'.'.$type);
 	}
-	
+
 	private function removeExpiredCache($type)
 	{
 		$type_path = $type.'_path';
@@ -547,17 +549,35 @@ class Pages_Core {
 					{
 						unlink($this->$type_path.$file);
 					}
-		        }
-				
+				}
+
 				closedir($dir);
-		    }
+			}
 		}
 	}
 	
 	private function setCache($type, $key, $data)
 	{
 		$filename = $key.'.'.$type;
-		
+
+		// When building the new combined files, if it's CSS and they
+		// want to roundrobin the subdomain for asynchronous downloads
+		if ($type === 'css' && Kohana::config('pages.subdomain_roundrobin') === TRUE)
+		{
+			$found = 0;
+			$count = 1;
+			$prefix = Kohana::config('pages.subdomain_roundrobin_prefix');
+
+			do
+			{
+				// Setup new url
+				$ext_url = str_replace('http://', 'http://'.$prefix.sprintf('%02d', $count).'.', $this->ext_url);
+				$data = preg_replace('/url\((?!http)(.+)\)/', 'url('.$ext_url.'$1)', $data, 2, $found);
+
+				++$count;
+			} while ($found > 1);
+		}
+
 		if (Kohana::config('pages.format_output') === 'compress')
 		{
 			switch (TRUE)
@@ -569,7 +589,7 @@ class Pages_Core {
 					$data = page::compressCSS($data);
 					break;
 			}
-		}		
+		}
 		
 		$put = (bool) file_put_contents(Kohana::config('pages.'.$type.'_path').$filename, $data);
 	
