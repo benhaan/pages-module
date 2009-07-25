@@ -129,13 +129,20 @@ class page_Core {
 
 	public static function ext($url)
 	{
-		self::$url_pre_counter++;
-		if (self::$url_pre_counter % 2 === 0)
+		if (Kohana::config('pages.cache_externals') === TRUE) 
 		{
-			self::$url_pre_counter = 0;
-			self::$url_pre++;
+			self::$url_pre_counter++;
+			if (self::$url_pre_counter % 2 === 0)
+			{
+				self::$url_pre_counter = 0;
+				self::$url_pre++;
+			}
+	
+			return str_replace('ext', self::$url_pre.'.ext', Kohana::config($url));
 		}
-
-		return str_replace('ext', self::$url_pre.'.ext', Kohana::config($url));
+		else
+		{
+			return Kohana::config($url);
+		}
 	}
 }
