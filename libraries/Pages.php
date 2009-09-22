@@ -139,7 +139,7 @@ class Pages_Core {
 	
 	public function addRSS($href, $title = FALSE)
 	{
-		$this->addLink('alternate', 'application/rss+xml', $href, $title);
+		$this->addLink('alternate', $href, 'application/rss+xml', $title);
 	}
 	
 	public function addMeta($name, $content)
