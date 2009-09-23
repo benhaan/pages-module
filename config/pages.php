@@ -53,12 +53,6 @@ $config['subdomain_roundrobin'] = FALSE;
 $config['subdomain_roundrobin_prefix'] = '';
 
 /**
- * Separating JS from HEAD output var allows you to place js output wherever you like, Steve Souders (High Performance
- * Web Sites) suggest at the bottom of the page because of script blocking.
- */
-$config['separate_js_output'] = FALSE;
-
-/**
  * Base externals URL and server path
  */
 
