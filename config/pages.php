@@ -3,6 +3,7 @@
  * @package	   Pages Module
  * @author     Sam Soffes
  * @author     Josh Turmel
+ * @author     Ben Haan
  */
  
 /**
