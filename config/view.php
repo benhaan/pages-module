@@ -4,7 +4,8 @@
  *
  * Allowed non-php view types. Most file extensions are supported.
  */
-$config['allowed_filetypes'] = array
+return array(
+'allowed_filetypes' => array
 (
 	'gif',
 	'jpg', 'jpeg',
@@ -15,4 +16,4 @@ $config['allowed_filetypes'] = array
 	'css',
 	'js',
 	'markdown', 'mdown', 'md'
-);
+));
