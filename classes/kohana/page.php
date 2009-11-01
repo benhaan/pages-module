@@ -5,8 +5,9 @@
  * @package	   Pages Module
  * @author     Sam Soffes
  * @author     Josh Turmel
+ * @author     Ben Haan
  */
-class page_Core {
+class Kohana_Page {
 
 	private static $url_pre_counter = 0;
 	private static $url_pre = 1;
@@ -38,7 +39,7 @@ class page_Core {
 		}
 
 		// Load the view
-		$view = new View($view, $config, $type);
+		$view = View::factory($view, $config);
 		$output = $view->render();
 		
 		// Convert to markdown automatically
@@ -97,7 +98,7 @@ class page_Core {
 	 * @param   string        buffer
 	 * @return  string        compressed version
 	 */
-	function compressCSS($buffer)
+	public static function compressCSS($buffer)
 	{
 		$buffer = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $buffer);
 		$buffer = str_replace(array("\r\n", "\r", "\n", "\t", ' ', ' ', ' '), '', $buffer);
@@ -110,7 +111,7 @@ class page_Core {
 	 * @param   string        script to pack
 	 * @return  string        packed version
 	 */
-	function packJS($script)
+	public static function packJS($script)
 	{
 		$packer = new JavaScriptPacker($script);
 		return $packer->pack();
@@ -122,7 +123,7 @@ class page_Core {
 	 * @param   string        script to minify
 	 * @return  string        minified version
 	 */
-	function minifyJS($script)
+	public static function minifyJS($script)
 	{
 		return JSMin::minify($script);
 	}
