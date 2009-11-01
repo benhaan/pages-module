@@ -99,8 +99,8 @@ class Pages {
 		$this->js_url = ((substr($this->js_url, -1) != '/') ? $this->js_url.'/' : $this->js_url);
 		
 		$this->ext_path = Kohana::config('pages.ext_path');
-		$this->css_path = $this->ext_path.Kohana::config('pages.css_path');
-		$this->js_path  = $this->ext_path.Kohana::config('pages.js_path');
+		$this->css_path = $this->ext_path.Kohana::config('pages.css_dir');
+		$this->js_path  = $this->ext_path.Kohana::config('pages.js_dir');
 		
 		// Setup misc switches and vars
 		$this->cache_externals = Kohana::config('pages.cache_externals');
@@ -594,7 +594,7 @@ class Pages {
 		$exists    = 'cache_'.$type.'_exists';
 		$cache     = 'cache_'.$type;
 		$key       = 'cache_'.$type.'_key';
-		$path      = Kohana::config('pages.'.$type.'_path');
+		$path      = $this->ext_path.Kohana::config('pages.'.$type.'_dir');
 		$container = 'cache_container_'.$type;
 
 		if ($this->$exists === FALSE)
@@ -652,16 +652,16 @@ class Pages {
 
 	private function cacheExists($type, $key)
 	{
-		return (bool) file_exists(Kohana::config('pages.'.$type.'_path').$key.'.'.$type);
+		return (bool) file_exists($this->ext_path.Kohana::config('pages.'.$type.'_dir').$key.'.'.$type);
 	}
 
 	private function getCache($type, $key)
 	{
 		$data = FALSE;
 
-		if (file_exists(Kohana::config('pages.'.$type.'_path').$key.'.'.$type))
+		if (file_exists($this->ext_path.Kohana::config('pages.'.$type.'_dir').$key.'.'.$type))
 		{
-			$data = file_get_contents(Kohana::config('pages.'.$type.'_path').$key.'.'.$type);
+			$data = file_get_contents($this->ext_path.Kohana::config('pages.'.$type.'_dir').$key.'.'.$type);
 		}
 		
 		if ($data !== FALSE)
@@ -732,7 +732,7 @@ class Pages {
 			}
 		}
 		
-		$put = (bool) file_put_contents(Kohana::config('pages.'.$type.'_path').$filename, $data);
+		$put = (bool) file_put_contents($this->ext_path.Kohana::config('pages.'.$type.'_dir').$filename, $data);
 	
 		return array('put' => $put, 'filename' => $filename, 'separate' => $separate);
 	}
