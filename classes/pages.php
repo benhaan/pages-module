@@ -293,7 +293,7 @@ class Pages {
 			{
 				$output = '<script type="text/javascript" src="'.$js['file'].'"></script>'.$eol;
 
-				if ($js['separate'])
+				if (Kohana::config('pages.separate_js_output') === TRUE || $js['separate'])
 				{
 					$this->js_output .= $output;
 				}
@@ -311,11 +311,11 @@ class Pages {
 			{
 				$this->removeExpiredCache('js');
 
-				$cache = $this->setCache('js', $this->cache_js_key, $this->cache_container_js, $js['separate']);
+				$cache = $this->setCache('js', $this->cache_js_key, $this->cache_container_js);
 
 				$output = '<script type="text/javascript" src="'.$this->js_url.$cache['filename'].'"></script>'.$eol;
 
-				if ($cache['separate'])
+				if (Kohana::config('pages.separate_js_output') === TRUE)
 				{
 					$this->js_output .= $output;
 				}
