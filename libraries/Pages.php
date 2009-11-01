@@ -157,7 +157,7 @@ class Pages_Core {
 	 * @param   boolean       embed the script or link to it
 	 * @return  void
 	 */
-	protected function addScript($type, $file, $options = array('cache' => null, 'separate' => 'null'))
+	protected function addScript($type, $file, $cache = null, $separate = FALSE))
 	{
 		// Set cache defult
 		if ($options['cache'] === null && Kohana::config('pages.cache_externals') === TRUE)
@@ -166,11 +166,11 @@ class Pages_Core {
 			$list = &$this->$cache_list;
 			$list[$file] = TRUE;
 
-			$options['cache'] = TRUE;
+			$cache = TRUE;
 		}
-		elseif ($options['cache'] === null)
+		elseif ($cache === null)
 		{
-			$options['cache'] = FALSE;
+			$cache = FALSE;
 		}
 	
 		$url = $type.'_url';
@@ -189,8 +189,8 @@ class Pages_Core {
 		    $scripts[$file]['file'] = url::site($this->$url.$file.'.'.$type.$this->version);
 		}
 		
-		$scripts[$file]['cache'] = (bool) $options['cache'];
-		$scripts[$file]['separate'] = (bool) $options['separate'];
+		$scripts[$file]['cache'] = (bool) $cache;
+		$scripts[$file]['separate'] = (bool) $separate;
 	}
 	
 	public function addCSS($file, $cache = null)
@@ -208,9 +208,9 @@ class Pages_Core {
 		$this->css = array();
 	}
 
-	public function addJS($file, $cache = null, $separate = null)
+	public function addJS($file, $cache = null, $separate = FALSE)
 	{
-		$this->addScript('js', $file, array('cache' => $cache, 'separate' => $separate));
+		$this->addScript('js', $file, $cache, $separate));
 	}
 
 	public function removeJS($script)
@@ -289,7 +289,7 @@ class Pages_Core {
 			{
 				$output = '<script type="text/javascript" src="'.$js['file'].'"></script>'.$eol;
 
-				if ($js['separate'])
+				if (Kohana::config('pages.separate_js_output') === TRUE || $js['separate'])
 				{
 					$this->js_output .= $output;
 				}
@@ -311,7 +311,7 @@ class Pages_Core {
 
 				$output = '<script type="text/javascript" src="'.$this->js_url.$cache['filename'].'"></script>'.$eol;
 
-				if ($cache['separate'])
+				if (Kohana::config('pages.separate_js_output') === TRUE || $cache['separate'])
 				{
 					$this->js_output .= $output;
 				}
@@ -326,7 +326,7 @@ class Pages_Core {
 
 				$output = '<script type="text/javascript" src="'.$this->js_url.$filename.'.js"></script>'.$eol;
 
-				if (Kohana::config('pages.separate_js_output') === TRUE)
+				if (Kohana::config('pages.separate_js_output') === TRUE || $cache['separate'])
 				{
 					$this->js_output .= $output;
 				}
@@ -340,7 +340,7 @@ class Pages_Core {
 		{
 			$output = '<script type="text/javascript" src="'.$this->js_url.$this->cache_js_key.'.js"></script>'.$eol;
 
-			if (Kohana::config('pages.separate_js_output') === TRUE)
+			if (Kohana::config('pages.separate_js_output') === TRUE || $js['separate'])
 			{
 				$this->js_output .= $output;
 			}
@@ -357,7 +357,7 @@ class Pages_Core {
 			           implode($eol, $this->raw_js).$eol.
 			           '</script>'.$eol;
 
-			if (Kohana::config('pages.separate_js_output') === TRUE)
+			if (Kohana::config('pages.separate_js_output') === TRUE || $js['separate'])
 			{
 				$this->js_output .= $output;
 			}
@@ -558,7 +558,7 @@ class Pages_Core {
 		}
 	}
 	
-	private function setCache($type, $key, $data, $separate = null)
+	private function setCache($type, $key, $data, $separate = FALSE)
 	{
 		$filename = $key.'.'.$type;
 
