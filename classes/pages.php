@@ -639,11 +639,11 @@ class Pages {
 		switch($format)
 		{
 			case 'compress':
-				$output = Page::compress($output);
+				$output = self::compress($output);
 				break;
 				
 			case 'indent':
-				$output = Page::indent($output);
+				$output = self::indent($output);
 				break;
 		}
 		
@@ -697,7 +697,7 @@ class Pages {
 		}
 	}
 	
-	private function setCache($type, $key, $data, $separate = null)
+	private function setCache($type, $key, $data)
 	{
 		$filename = $key.'.'.$type;
 
@@ -724,16 +724,16 @@ class Pages {
 			switch (TRUE)
 			{
 				case ($type === 'js'):
-					$data = Page::minifyJS($data);
+					$data = self::minifyJS($data);
 					break;
 				case ($type === 'css'):
-					$data = Page::compressCSS($data);
+					$data = self::compressCSS($data);
 					break;
 			}
 		}
 		
 		$put = (bool) file_put_contents($this->ext_path.Kohana::config('pages.'.$type.'_dir').$filename, $data);
 	
-		return array('put' => $put, 'filename' => $filename, 'separate' => $separate);
+		return array('put' => $put, 'filename' => $filename);
 	}
 }
