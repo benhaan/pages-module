@@ -157,7 +157,7 @@ class Pages_Core {
 	 * @param   boolean       embed the script or link to it
 	 * @return  void
 	 */
-	protected function addScript($type, $file, $options = array('cache' => null; 'separate' => 'null'))
+	protected function addScript($type, $file, $options = array('cache' => null, 'separate' => 'null'))
 	{
 		// Set cache defult
 		if ($options['cache'] === null && Kohana::config('pages.cache_externals') === TRUE)
