@@ -7,7 +7,10 @@
  * @author     Josh Turmel
  * @author     Ben Haan
  */
-class Pages_Core {
+class Pages {
+
+	private static $url_pre_counter = 0;
+	private static $url_pre = 1;
 
 	protected $html         = '';
 	protected $head         = '';
@@ -85,8 +88,8 @@ class Pages_Core {
 		$this->title_sep       = Kohana::config('pages.title_seperator');
 		$this->title_rev       = Kohana::config('pages.title_reverse');
 		$this->ext_url         = Kohana::config('pages.ext_url');
-		$this->css_url         = Kohana::config('pages.css_url');
-		$this->js_url          = Kohana::config('pages.js_url');
+		$this->css_url         = $this->ext_url.Kohana::config('pages.css_dir');
+		$this->js_url          = $this->ext_url.Kohana::config('pages.js_url');
 		$this->template        = Kohana::config('pages.template');
 		$this->cache_lifetime  = Kohana::config('pages.cache_lifetime');
 		$this->format_output   = Kohana::config('pages.format_output');
@@ -95,8 +98,9 @@ class Pages_Core {
 		$this->css_url = ((substr($this->css_url, -1) != '/') ? $this->css_url.'/' : $this->css_url);
 		$this->js_url = ((substr($this->js_url, -1) != '/') ? $this->js_url.'/' : $this->js_url);
 
-		$this->css_path = Kohana::config('pages.css_path');
-		$this->js_path  = Kohana::config('pages.js_path');
+		$this->ext_path = Kohana::config('pages.ext_path');
+		$this->css_path = $this->ext_path.Kohana::config('pages.css_dir');
+		$this->js_path  = $this->ext_path.Kohana::config('pages.js_dir');
 
 		// Setup misc switches and vars
 		$this->cache_externals = Kohana::config('pages.cache_externals');
@@ -157,10 +161,11 @@ class Pages_Core {
 	 * @param   boolean       embed the script or link to it
 	 * @return  void
 	 */
-	protected function addScript($type, $file, $cache = null, $separate = FALSE))
+
+	protected function addScript($type, $file, $cache = null)
 	{
 		// Set cache defult
-		if ($options['cache'] === null && Kohana::config('pages.cache_externals') === TRUE)
+		if ($cache === null && Kohana::config('pages.cache_externals') === TRUE)
 		{
 			$cache_list = $type.'_cache_list';
 			$list = &$this->$cache_list;
@@ -186,16 +191,32 @@ class Pages_Core {
 		}
 		else
 		{
-		    $scripts[$file]['file'] = url::site($this->$url.$file.'.'.$type.$this->version);
+		    $scripts[$file]['file'] = URL::site($this->$url.$file.'.'.$type.$this->version);
 		}
 
 		$scripts[$file]['cache'] = (bool) $cache;
-		$scripts[$file]['separate'] = (bool) $separate;
 	}
 
-	public function addCSS($file, $cache = null)
+	/**
+	 * Public method for adding css files to the head
+	 *
+	 * @param string       filename
+	 * @param boolean      embed file or link to it.
+	 * @param array        create IE style and check and compare versions
+	 * @return void
+	 */
+
+	public function addCSS($file, $cache = null, $ie_style = array('enable' => FALSE, 'version' => NULL, 'comparison' => NULL))
 	{
 		$this->addScript('css', $file, $cache);
+
+		if ($ie_style['enable'])
+		{
+			$this->css[$file]['ie_style'] = TRUE;
+			$this->css[$file]['ie_version'] = (isset($ie_style['version'])) ? $ie_style['version'] : NULL;
+			$this->css[$file]['ie_comparison'] = (isset($ie_style['comparison'])) ? $ie_style['comparison'] : NULL;
+		}
+
 	}
 
 	public function removeCSS($script)
@@ -208,9 +229,22 @@ class Pages_Core {
 		$this->css = array();
 	}
 
+
+	/**
+	 * Public method for adding javascript files
+	 *
+	 * @param string       filename
+	 * @param boolean      embed file or link to it.
+	 * @param boolean      include file in head or in $js variable
+	 * @return void
+	 */
+
 	public function addJS($file, $cache = null, $separate = FALSE)
 	{
-		$this->addScript('js', $file, $cache, $separate));
+		$this->addScript('js', $file, $cache);
+
+		if ($separate)
+			$this->js[$file]['separate'] = TRUE;
 	}
 
 	public function removeJS($script)
@@ -251,7 +285,24 @@ class Pages_Core {
 			}
 			elseif ($css['cache'] === FALSE)
 			{
-				$this->head .= '<link rel="stylesheet" href="'.$css['file'].'" type="text/css" />'.$eol;
+
+				$style = '<link rel="stylesheet" href="'.$css['file'].'" type="text/css" />';
+
+				// Build IE only link tag
+				if ($css['ie_style'])
+				{
+					// Check that if a comparison is set, that a version of IE is too
+					if ($css['ie_comparison'] != NULL AND $css['ie_version'] == NULL)
+						throw new Kohana_Exception('A version of IE must be passed along with a comparison value');
+
+					$this->head .= str_replace('  ',' ','<!--[if '.$css['ie_comparison'].' IE '.$css['ie_version'].']>'.$eol);
+					$this->head .= "\t".$style.$eol;
+					$this->head .= '<![endif]-->'.$eol;
+				}
+				else
+				{
+					$this->head .= $style.$eol;
+				}
 			}
 		}
 
@@ -307,11 +358,12 @@ class Pages_Core {
 			{
 				$this->removeExpiredCache('js');
 
-				$cache = $this->setCache('js', $this->cache_js_key, $this->cache_container_js, $js['separate']);
+				$cache = $this->setCache('js', $this->cache_js_key, $this->cache_container_js);
 
 				$output = '<script type="text/javascript" src="'.$this->js_url.$cache['filename'].'"></script>'.$eol;
 
-				if (Kohana::config('pages.separate_js_output') === TRUE || $cache['separate'])
+
+				if (Kohana::config('pages.separate_js_output') === TRUE)
 				{
 					$this->js_output .= $output;
 				}
@@ -418,7 +470,7 @@ class Pages_Core {
 				);
 			}
 
-			$content = page::view($content, $config, $type);
+			$content = self::view($content, $config, $type);
 		}
 
 		// Display the page with a template
@@ -435,7 +487,7 @@ class Pages_Core {
 			);
 
 			// Display the view
-			$view = new View($this->template, $config);
+			$view = View::factory($this->template, $config);
 			$output = $view->render();
 		}
 		else
@@ -450,12 +502,147 @@ class Pages_Core {
 		echo $output;
 	}
 
+	/**
+	 * Returns the value of a view ane merges the config with any data passed to it
+	 *
+	 * @param   string        name of view
+	 * @param   boolean|array optional array of data to pass to the view
+	 * @param   string        file extension
+	 * @param   boolean|int   lifetime of cache. if set to true it will use the default
+	 *                            cache from the pages config or use an int if it is passed one
+	 * @return  string        contents of view or cache file
+	 */
+	public static function view($view, $config = FALSE, $type = FALSE, $lifetime = FALSE)
+	{
+		$page = self::instance();
+
+		// Setup caching and return the cache file it it works
+		if ($lifetime)
+		{
+			$cache = new Cache;
+			$cache_name = $page->getCacheIdForView($view.$type.serialize($data));
+
+			if ($output = $cache->get($cache_name))
+			{
+				return $output;
+			}
+		}
+
+		// Load the view
+		$view = View::factory($view, $config);
+		$output = $view->render();
+
+		// Convert to markdown automatically
+		if ($type == 'markdown' || $type == 'mdown' || $type == 'md')
+		{
+			$output = Pages_Markdown::to_html($output);
+		}
+
+		// Store into cache
+		if ($lifetime)
+		{
+			// Setup lifetime
+			if ($lifetime === TRUE)
+			{
+				$lifetime = $page->cache_lifetime;
+			}
+			else
+			{
+				$lifetime = (int) $lifetime;
+			}
+
+			// Store the cache
+			$cache->set($cache_name, $output, NULL, $lifetime);
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Returns compressed xml or html
+	 *
+	 * @param   string        input
+	 * @return  string        compressed version
+	 */
+	public static function compress($input)
+	{
+		$input = str_replace(array("\r\n", "\r", "\n", "\t"), '', $input);
+		$input = preg_replace(array('/\>[^\S ]+/s', '/[^\S ]+\</s', '/(\s)+/s'), array('>', '<', '\\1'), $input);
+		return $input;
+	}
+
+	public static function indent($input)
+	{
+		$xml = new DOMDocument;
+		$xml->preserveWhiteSpace = FALSE;
+		$xml->formatOutput = TRUE;
+		$xml->loadXML($input);
+		$output = substr($xml->saveXML(), 22); // Strip the <?xml> at the beginning
+		$output = str_replace('<![CDATA[', '//<![CDATA[', $output);
+		return str_replace(']]>', '//]]>', $output);
+	}
+
+	/**
+	 * Returns compressed css
+	 *
+	 * @param   string        buffer
+	 * @return  string        compressed version
+	 */
+	public static function compressCSS($buffer)
+	{
+		$buffer = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $buffer);
+		$buffer = str_replace(array("\r\n", "\r", "\n", "\t", ' ', ' ', ' '), '', $buffer);
+		return $buffer;
+	}
+
+	/**
+	 * Returns packed js
+	 *
+	 * @param   string        script to pack
+	 * @return  string        packed version
+	 */
+	public static function packJS($script)
+	{
+		$packer = new Pages_JavaScriptPacker($script);
+		return $packer->pack();
+	}
+
+	/**
+	 * Returns minified js
+	 *
+	 * @param   string        script to minify
+	 * @return  string        minified version
+	 */
+	public static function minifyJS($script)
+	{
+		return JSMin::minify($script);
+	}
+
+	public static function ext($url)
+	{
+		if (Kohana::config('pages.cache_externals') === TRUE)
+		{
+			self::$url_pre_counter++;
+			if (self::$url_pre_counter % 2 === 0)
+			{
+				self::$url_pre_counter = 0;
+				self::$url_pre++;
+			}
+
+			return str_replace('ext', self::$url_pre.'.ext', Kohana::config($url));
+		}
+		else
+		{
+			return Kohana::config($url);
+		}
+	}
+
 	private function fileCombine($type, $file)
 	{
 		$exists    = 'cache_'.$type.'_exists';
 		$cache     = 'cache_'.$type;
 		$key       = 'cache_'.$type.'_key';
-		$path      = Kohana::config('pages.'.$type.'_path');
+		$path      = $this->ext_path.Kohana::config('pages.'.$type.'_dir');
 		$container = 'cache_container_'.$type;
 
 		if ($this->$exists === FALSE)
@@ -500,11 +687,11 @@ class Pages_Core {
 		switch($format)
 		{
 			case 'compress':
-				$output = page::compress($output);
+				$output = self::compress($output);
 				break;
 
 			case 'indent':
-				$output = page::indent($output);
+				$output = self::indent($output);
 				break;
 		}
 
@@ -513,16 +700,16 @@ class Pages_Core {
 
 	private function cacheExists($type, $key)
 	{
-		return (bool) file_exists(Kohana::config('pages.'.$type.'_path').$key.'.'.$type);
+		return (bool) file_exists($this->ext_path.Kohana::config('pages.'.$type.'_dir').$key.'.'.$type);
 	}
 
 	private function getCache($type, $key)
 	{
 		$data = FALSE;
 
-		if (file_exists(Kohana::config('pages.'.$type.'_path').$key.'.'.$type))
+		if (file_exists($this->ext_path.Kohana::config('pages.'.$type.'_dir').$key.'.'.$type))
 		{
-			$data = file_get_contents(Kohana::config('pages.'.$type.'_path').$key.'.'.$type);
+			$data = file_get_contents($this->ext_path.Kohana::config('pages.'.$type.'_dir').$key.'.'.$type);
 		}
 
 		if ($data !== FALSE)
@@ -558,7 +745,8 @@ class Pages_Core {
 		}
 	}
 
-	private function setCache($type, $key, $data, $separate = FALSE)
+
+	private function setCache($type, $key, $data)
 	{
 		$filename = $key.'.'.$type;
 
@@ -585,16 +773,16 @@ class Pages_Core {
 			switch (TRUE)
 			{
 				case ($type === 'js'):
-					$data = page::minifyJS($data);
+					$data = self::minifyJS($data);
 					break;
 				case ($type === 'css'):
-					$data = page::compressCSS($data);
+					$data = self::compressCSS($data);
 					break;
 			}
 		}
 
-		$put = (bool) file_put_contents(Kohana::config('pages.'.$type.'_path').$filename, $data);
+		$put = (bool) file_put_contents($this->ext_path.Kohana::config('pages.'.$type.'_dir').$filename, $data);
 
-		return array('put' => $put, 'filename' => $filename, 'separate' => $separate);
+		return array('put' => $put, 'filename' => $filename);
 	}
 }

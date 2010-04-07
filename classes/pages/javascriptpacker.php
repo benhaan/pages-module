@@ -66,7 +66,7 @@
  */
 
 
-class JavaScriptPacker_Core {
+class Pages_JavaScriptPacker {
 	// constants
 	const IGNORE = '$1';
 

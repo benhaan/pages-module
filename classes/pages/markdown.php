@@ -1,13 +1,14 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
- * @package    core
+ * @package    Pages Module
  * @author     Sam Soffes
+ * @author     Ben Haan
  */
 
 // Require the Markdown library
 require Kohana::find_file('vendor', 'Markdown');
 
-class markdown_Core {
+class Pages_Markdown {
 
 	public static function to_html($string)
 	{

@@ -5,12 +5,14 @@
  *
  * @package	   Pages Module
  * @author     Sam Soffes
+ * @author     Ben Haan
  */
-abstract class Page_Controller extends Controller {
+abstract class Controller_Pages extends Controller {
 
-	public function __construct()
+	public function __construct(Request $request)
 	{
-		parent::__construct();
+		$this->request = $request;
+		parent::__construct($request);
 
 		// Load the page class
 		$this->page = Pages::instance();
