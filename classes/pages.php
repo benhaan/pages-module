@@ -292,7 +292,7 @@ class Pages {
 				$style = '<link rel="stylesheet" href="'.$css['file'].'" type="text/css" />';
 
 				// Build IE only link tag
-				if ($css['ie_style'])
+				if (isset($css['ie_style']))
 				{
 					// Check that if a comparison is set, that a version of IE is too
 					if ($css['ie_comparison'] != NULL AND $css['ie_version'] == NULL)
