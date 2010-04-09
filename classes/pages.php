@@ -63,6 +63,9 @@ class Pages {
 	protected $cache_container_css = '';
 	protected $cache_container_js  = '';
 
+	// Site wide variables passed to views
+	protected $config = array();
+
 	/**
 	 * Returns a singleton instance of URI.
 	 *
@@ -447,6 +450,22 @@ class Pages {
 		$this->buildCSSAndJS();
 	}
 
+	/**
+	* Assigns a value by reference.  Gives same functionality as the View's bind method.
+	* Used for setting variables for every view.
+	*
+	* @param string    variable name
+	* @param mixed     referenced variable
+	* @return Pages
+	*/
+
+	public function bind($key, & $content)
+	{
+		$this->config[$key] =& $content;
+
+		return $this;
+	}
+
 	public function display($content = FALSE, $config = array(), $type = FALSE) {
 
 		// Make the eol a local variable for less typing
@@ -468,6 +487,10 @@ class Pages {
 						'js'     => $this->js_output
 					)
 				);
+
+				// Add any global config array data and add it to data passed in
+				if ( ! empty($this->config))
+					$config = array_merge($config, $this->config);
 			}
 
 			$content = self::view($content, $config, $type);
@@ -485,6 +508,10 @@ class Pages {
 					'js'      => $this->js_output
 				)
 			);
+
+			// Add any global config array data and add it to data passed in
+			if ( ! empty($this->config))
+				$config = array_merge($config, $this->config);
 
 			// Display the view
 			$view = View::factory($this->template, $config);
